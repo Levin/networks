@@ -7,7 +7,31 @@ defmodule Starnet.Switch do
   """
 
 
+    use GenServer
+    require Logger
 
+    def start_link(params) do
+      GenServer.start_link(__MODULE__, params)
+    end
+
+    def init(params) do
+      Logger.debug("*** starting switch ***")
+    
+      {:ok, 
+        %{
+          ip: "94.54.102.1",
+          name: params.name,
+          c_nodes: [],
+          c_wires: []
+      }, {:continue, :setup}}
+    end
+
+
+    def handle_continue(:setup, state) do
+      Phoenix.PubSub.subscribe(Nets.PubSub, "star")
+      Phoenix.PubSub.subscribe(Nets.PubSub, "switch")
+      {:noreply, state}
+    end
 
 end
 
