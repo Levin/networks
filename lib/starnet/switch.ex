@@ -5,8 +5,9 @@ defmodule Starnet.Switch do
     through a wire and sends the data to the specified receiver.
     A switch holds data just temporarily until the receiving part accepted the data package.
   """
+alias Hex.Solver.Registry
 
-  # TODO: make c_nodes/c_wires accept nodes/wires just on time -> see what makes sense
+  # NOTE: monitor if HashSet makes sense       /done/make c_nodes/c_wires accept nodes/wires just on time -> see what makes sense
 
 
     use GenServer
@@ -25,8 +26,8 @@ defmodule Starnet.Switch do
           ip: "94.54.102.1",
           name: params.name,
           ram: [],
-          c_nodes: [],
-          c_wires: [],
+          c_nodes: MapSet.new(),
+          c_wires: MapSet.new(),
       }, {:continue, :setup}}
     end
 
@@ -37,11 +38,19 @@ defmodule Starnet.Switch do
       {:noreply, state}
     end
 
-  defp lookup_node(node) do
+  def lookup_node(node) do
+    case Registry.values(Registry.UniqueLookupTest, node.ip, self()) do
+      [] -> nil
+      entry -> IO.inspect(entry)
+    end
     node
   end
 
   defp lookup_wire(wire) do
+    case Registry.values(Registry.UniqueLookupTest, wire.id, self()) do
+      [] -> nil
+      entry -> IO.inspect(entry)
+    end
     wire
   end
 
