@@ -14,9 +14,8 @@ alias Hex.Solver.Registry
     require Logger
     
     def start_link(params) do
-      # TODO: think about building registries for wires/nodes/switches
-      Elixir.Registry.start_link(keys: :duplicate, name: Registry.Servant)
       GenServer.start_link(__MODULE__, params)
+      :ets.new(:registry_switch, [:duplicate_bag])
     end
 
     def init(params) do
@@ -36,8 +35,16 @@ alias Hex.Solver.Registry
     def handle_continue(:setup, state) do
       Phoenix.PubSub.subscribe(Nets.PubSub, "star")
       Phoenix.PubSub.subscribe(Nets.PubSub, "switch")
-      Elixir.Registry.register(Registry.Servant, :ip_switch, state.ip)
+      :ets.insert(:registry_switch, {:switch_ip, state.ip})
+      Logger.debug(:ets.lookup(:registry_switch, :switch_ip))
       {:noreply, state}
+    end
+
+    def handle_continue(:state, {ip, _adress}, state) do
+      case :ets.lookup(:registry_switch, ip) do
+        value -> Logger.debug(inspect(value))
+      end
+      {:noreply, state}  
     end
 
   # TODO: make this behave like -> got entry -> true -> entry

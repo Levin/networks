@@ -31,4 +31,10 @@ defmodule Starnet.Node do
 
     {:noreply, state}
   end
+
+
+  def send_ping(ip_adress, state) do
+    Phoenix.PubSub.broadcast(Nets.PubSub, "star", {:switch, {String.to_atom("node_#{state.name}"), ip_adress}})
+  end
+
 end
