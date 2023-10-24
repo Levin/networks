@@ -1,0 +1,25 @@
+
+
+Here we take notes and think about new functionality
+
+Today(24-10-2023) -> How do switches really operates
+- notes device mac in table  <- for identification
+- portsize !!
+- incoming packets contain a header -> contain receiver mac (routing)
+- consider having bandwidth included
+- unmanaged switch -> the one we will build now
+- managed switch -> smtp <- see protocol, IP routing, 
+ 
+  => features
+  	- enable/disable ports
+	- portsize
+	- mac storage
+	- monitoring
+	- mac filtering
+ 
+
+
+
+
+Future(soon) -> hubs
+- broadcast to all connected devices

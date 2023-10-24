@@ -14,15 +14,13 @@ defmodule Starnet.Node do
   def init(params) do
     Logger.debug("*** starting node ***")
 
-    {:ok,  
-      %{
-        ip: "64.9.78.21",
-        name: params.name,
-        flash: [],
-        c_wires: []
-      },
-      {:continue, :setup}
-    }
+    {:ok,
+     %{
+       ip: "64.9.78.21",
+       name: params.name,
+       flash: [],
+       c_wires: []
+     }, {:continue, :setup}}
   end
 
   def handle_continue(:setup, state) do
@@ -32,9 +30,11 @@ defmodule Starnet.Node do
     {:noreply, state}
   end
 
-
   def send_ping(ip_adress, state) do
-    Phoenix.PubSub.broadcast(Nets.PubSub, "star", {:switch, {String.to_atom("node_#{state.name}"), ip_adress}})
+    Phoenix.PubSub.broadcast(
+      Nets.PubSub,
+      "star",
+      {:switch, {String.to_atom("node_#{state.name}"), ip_adress}}
+    )
   end
-
 end

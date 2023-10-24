@@ -44,24 +44,21 @@ defmodule Ring.Ring do
   # map number to start worker process (map(fn x -> Ring.Worker.handle_info({:start_worker, %{id: x}} end))) / startlink
   # call them indefinately
   def handle_continue(:setup_ring, state) do
-    ids = [1,2,3,4,5,6,7,8]
-    |> Enum.map(fn x -> ping_worker(x) end)
+    ids =
+      [1, 2, 3, 4, 5, 6, 7, 8]
+      |> Enum.map(fn x -> ping_worker(x) end)
 
-
-    [1,2,3,4,5,6,7,8]
+    [1, 2, 3, 4, 5, 6, 7, 8]
     |> Enum.map(fn x -> Phoenix.PubSub.broadcast(Nets.PubSub, "ring", {:exit, %{w_id: x}}) end)
-
 
     {:noreply, %{state | workers: [ids | state.workers]}}
   end
-
 
   defp ping_worker(id) do
     worker = {:ping, %{w_id: id, message: "ping from worker-#{id}"}}
     Ring.Worker.start_link(%{w_id: id})
     Phoenix.PubSub.broadcast(Nets.PubSub, "ring", worker)
   end
-
 end
 
 defmodule Ring.Worker do
@@ -81,36 +78,33 @@ defmodule Ring.Worker do
 
     {:ok,
      %{
-        worker: params.w_id
-      }}
+       worker: params.w_id
+     }}
   end
 
   # subscribes to the next workers channel TODO: and sends him a message to call the next one
   def handle_info({:ping, %{w_id: id, message: msg}} = ping, state) do
     Logger.debug("*** working ping #{id} sending message: #{msg}***")
-    Phoenix.PubSub.broadcast(Nets.PubSub, "ring", {:next, %{w_id: id+1}})
+    Phoenix.PubSub.broadcast(Nets.PubSub, "ring", {:next, %{w_id: id + 1}})
 
     {:noreply, state}
   end
 
   def handle_info({:next, %{w_id: id}}, state) do
     case id do
-      nil 
-        ->
-          Logger.debug(" *** worker lost ***")
+      nil ->
+        Logger.debug(" *** worker lost ***")
 
-      _  
-        -> 
-          Logger.debug("*** got ping from worker-#{id-1} ***")
-          Logger.debug("*** giving ping to worker-#{id+1} ***")
+      _ ->
+        Logger.debug("*** got ping from worker-#{id - 1} ***")
+        Logger.debug("*** giving ping to worker-#{id + 1} ***")
     end
 
-    {:noreply, state} 
-  end 
+    {:noreply, state}
+  end
 
   def handle_info({:exit, %{w_id: id}}, state) do
     Logger.debug("*** worker-#{id} is shutting down ***")
-    {:noreply, %{state | worker: nil}}   
+    {:noreply, %{state | worker: nil}}
   end
-
 end

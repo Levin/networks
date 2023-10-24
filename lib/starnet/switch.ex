@@ -5,124 +5,129 @@ defmodule Starnet.Switch do
     through a wire and sends the data to the specified receiver.
     A switch holds data just temporarily until the receiving part accepted the data package.
   """
-alias Hex.Solver.Registry
 
   # NOTE: monitor if HashSet makes sense       /done/make c_nodes/c_wires accept nodes/wires just on time -> see what makes sense
 
+  use GenServer
+  require Logger
 
-    use GenServer
-    require Logger
-    
-    def start_link(params) do
-      GenServer.start_link(__MODULE__, params)
-      :ets.new(:registry_switch, [:duplicate_bag])
-    end
+  def connect_device(mac, port) do
+    GenServer.cast(__MODULE__, {:connect_device, {mac, port}})
+  end
 
-    def init(params) do
-      Logger.debug("*** starting switch ***")
+  def open_port(port) do
+    GenServer.cast(__MODULE__, {:open_port, port})
+  end
 
-      {:ok, 
-        %{
-          ip: "94.54.102.1",
-          name: params.name,
-          ram: [],
-          c_nodes: MapSet.new(),
-          c_wires: MapSet.new(),
-      }, {:continue, :setup}}
-    end
+  def close_port(port) do
+    GenServer.cast(__MODULE__, {:close_port, port})
+  end
 
+  def list_devices() do
+    GenServer.call(__MODULE__, :list_devices)
+  end
 
-    def handle_continue(:setup, state) do
-      Phoenix.PubSub.subscribe(Nets.PubSub, "star")
-      Phoenix.PubSub.subscribe(Nets.PubSub, "switch")
-      :ets.insert(:registry_switch, {:switch_ip, state.ip})
-      Logger.debug(:ets.lookup(:registry_switch, :switch_ip))
-      {:noreply, state}
-    end
+  def get_ports() do
+    GenServer.call(__MODULE__, :list_ports)
+  end
 
-    def handle_continue(:state, {ip, _adress}, state) do
-      case :ets.lookup(:registry_switch, ip) do
-        value -> Logger.debug(inspect(value))
+  def list_open_ports() do
+    GenServer.call(__MODULE__, :list_open_ports)
+  end
+
+  def list_closed_ports() do
+    GenServer.call(__MODULE__, :list_closed_ports)
+  end
+
+  def start_link(_params) do
+    Logger.debug("[#{__MODULE__}] has started")
+    GenServer.start_link(__MODULE__, _params, name: __MODULE__)
+  end
+
+  def init(_params) do
+    Logger.debug("*** starting switch ***")
+
+    ports = 
+      for x <- 1..8 do
+        {x, :closed}
       end
-      {:noreply, state}  
-    end
+    
 
-  # TODO: make this behave like -> got entry -> true -> entry
-  #                                          -> false -> ask for creating new entry -> create it then
-  def lookup_node(node) do
-    case Elixir.Registry.values(Registry.Servant, node.ip, self()) do
-      [] -> nil
-      entry -> IO.inspect(entry)
-    end
-    node
+    Logger.debug("creating ports #{inspect ports}")
+
+    {:ok,
+     %{
+       mac: ~c"00-B0-D0-63-C2-26",
+       ports: ports,
+       devices: [],
+     }, {:continue, :setup}}
   end
 
-  # TODO: make this behave like -> got entry -> true -> entry
-  #                                         -> false -> ask for creating new entry -> create it then
-  defp lookup_wire(wire) do
-    case Elixir.Registry.values(Registry.Servant, wire.id, self()) do
-      [] -> nil
-      entry -> IO.inspect(entry)
-    end
-    wire
+  def handle_cast({:close_port, open_port}, state) do
+    changed_port = 
+      state.ports
+      |> Enum.filter(fn {port, _status} -> port == open_port end)
+      |> Enum.map(fn {port, _status} -> {port, :close} end)
+
+    filtered_ports = Enum.reject(state.ports, fn {port, _status} -> port == open_port end)
+
+
+
+    {:noreply, %{state | ports: changed_port ++ filtered_ports}}
   end
 
-  # TODO: different switches/nodes/wires
-  def lookup_ip_from(elem) do
-    term = case elem do
-      :switch -> :ip_switch 
-      :node -> :ip_node
-      :wire -> :ip_wire
-    end
-      Elixir.Registry.lookup(Registry.Servant, term)
+  def handle_cast({:open_port, open_port}, state) do
+    changed_port = 
+      state.ports
+      |> Enum.filter(fn {port, _status} -> port == open_port end)
+      |> Enum.map(fn {port, _status} -> {port, :open} end)
+
+    filtered_ports = state.ports
+    |> Enum.reject(fn {port, _} -> port == open_port end)
+
+    {:noreply, %{state | ports: filtered_ports ++ changed_port}}
   end
 
-  def handle_info({:transfer, %{node_a: node_a, node_b: node_b}}, state) do
-    # TODO: lookup registry(lookup_wire()/lookup_node()) for ip's of nodes
-    nodea = lookup_ip_from(node_a.name)
-    nodeb = lookup_ip_from(node_b.name)
-    #       case ip_exists true -> lookup wires 
-    #                     false -> ask missing node for ip, then continue with true
-
-    cond do
-      nodea == [] -> nodea# TODO: request nodea's ip
-      nodeb == [] -> nodeb# TODO: request nodeb's ip
-      nodea == [] && nodeb == [] -> {nodea, nodeb}# TODO: send request to both nodes for gathering theyr ip's
-      true -> Logger.debug("*** init sending ***")# TODO: success -> initiate the transfer
-    end
+  def handle_cast({:connect_device, {_mac, port}}, state) do
+    _open_port? = state.ports |> Enum.filter(fn {_, open?} -> port == open? end)
 
     {:noreply, state}
   end
-  
-  def handle_info({:register, %{node: %{ip: ip, name: name} = _node}}, state) do
-    node = case Elixir.Registry.lookup(Registry.Servant, ip)  do
-      [] -> Elixir.Registry.register(Registry.Servant, name, ip)
-      entry -> entry
-    end
-    {:noreply, %{state | c_nodes: [node | state.c_nodes]}}
-  end
-  
-  def handle_info({:register, %{wire: %{ip: ip, name: name} = _wire}}, state) do
-    wire = case Elixir.Registry.lookup(Registry.Servant, ip)  do
-      [] -> Elixir.Registry.register(Registry.Servant, name, ip)
-      wire -> wire
-    end
-    {:noreply, %{state | c_wires: [wire | state.c_wires]}}
+
+  def handle_continue(:setup, state) do
+    {:noreply, state}
   end
 
+  def handle_call(:list_devices, _from, state) do
+    {:reply, state.devices, state}
+  end
 
-    def handle_info({:new_connection, %{node: node, wire: wire}}, state) do
-      # TODO: lookup registy(lookup_node()/lookup_wire()) for entries -> 
-      node = lookup_ip_from(node.name)
-      wire = lookup_ip_from(wire.name)
-      #     case ip_exists true -> return ip through pubsub to calling node
-      #                   false -> update c_nodes + update c_wires
+  def handle_call(:list_ports, _from, state) do
+    {:reply, state.ports, state}
+  end
 
-      
+  def handle_call(:list_open_ports, _from, state) do
+    open_ports = 
+      state.ports
+      |> Enum.filter(fn {_port, status} -> status == :open end)
 
-      {:noreply,state}
+    {:reply, open_ports, state}
+  end
 
+  def handle_call(:list_closed_ports, _from, state) do
+    closed_ports = 
+      state.ports
+      |> Enum.filter(fn {_port, status} -> status == :closed end)
+
+    {:reply, closed_ports, state}
+  end
+
+  defp change_state(:open, {port, status} = port_change, searched_port) do
+    Logger.debug("change: #{inspect port_change}")
+    case port == searched_port do
+      true -> {port, :open}
+      false -> {port, status}
     end
+  end
 
 end
-
