@@ -11,7 +11,7 @@ Today(24-10-2023) -> How do switches really operates
 - managed switch -> smtp <- see protocol, IP routing, 
  
   => features
-  	- enable/disable ports
+  	- enable/disable ports  -> done
 	- portsize
 	- mac storage
 	- monitoring

@@ -20,29 +20,23 @@ defmodule SwitchTest do
 
   test "open closed port" do
     {port, status}  = {4, :closed}
-
     closed_ports = Switch.list_closed_ports()
-    
     assert length(closed_ports) == 8
-
     Switch.open_port(port)
-
     opened_ports = Switch.list_open_ports()
-    
     assert length(opened_ports) == 1
   end
 
   test "close open port" do
     opened_ports = Switch.list_open_ports()
+    assert length(opened_ports) == 0
     Switch.open_port(4)
-
-    assert length(opened_ports) == 1
-
+    new_opened_ports = Switch.list_open_ports()
+    assert length(new_opened_ports) == 1
     Switch.close_port(4)
-
-    closed_ports = Switch.list_closed_ports()
-
-    assert length(closed_ports) == 8
-
+    old_opened_ports = Switch.list_open_ports()
+    assert length(old_opened_ports) == 0
   end
+
+
 end

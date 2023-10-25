@@ -67,23 +67,28 @@ defmodule Starnet.Switch do
     changed_port = 
       state.ports
       |> Enum.filter(fn {port, _status} -> port == open_port end)
-      |> Enum.map(fn {port, _status} -> {port, :close} end)
+      |> Enum.map(fn {port, _status} -> {port, :closed} end)
 
-    filtered_ports = Enum.reject(state.ports, fn {port, _status} -> port == open_port end)
+    filtered_ports = 
+      Enum.reject(
+        state.ports, 
+        fn {port, _status} -> port == open_port end
+      )
 
+    Logger.debug("all ports == #{inspect changed_port ++ filtered_ports}")
 
 
     {:noreply, %{state | ports: changed_port ++ filtered_ports}}
   end
 
-  def handle_cast({:open_port, open_port}, state) do
+  def handle_cast({:open_port, closed_port}, state) do
     changed_port = 
       state.ports
-      |> Enum.filter(fn {port, _status} -> port == open_port end)
+      |> Enum.filter(fn {port, _status} -> port == closed_port end)
       |> Enum.map(fn {port, _status} -> {port, :open} end)
 
     filtered_ports = state.ports
-    |> Enum.reject(fn {port, _} -> port == open_port end)
+    |> Enum.reject(fn {port, _} -> port == closed_port end)
 
     {:noreply, %{state | ports: filtered_ports ++ changed_port}}
   end
