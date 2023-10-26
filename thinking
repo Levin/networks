@@ -12,6 +12,7 @@ Today(24-10-2023) -> How do switches really operates
  
   => features
   	- enable/disable ports  -> done
+	- connect devices on ports -> store macs
 	- portsize
 	- mac storage
 	- monitoring

@@ -25,6 +25,8 @@ defmodule SwitchTest do
     Switch.open_port(port)
     opened_ports = Switch.list_open_ports()
     assert length(opened_ports) == 1
+    Switch.close_port(port)
+    Switch.close_port port
   end
 
   test "close open port" do
@@ -38,5 +40,28 @@ defmodule SwitchTest do
     assert length(old_opened_ports) == 0
   end
 
+  test "test open port" do
+    port_number = 5
+    Switch.open_port(5)
+    assert Switch.port_open?(port_number) == :true
+    Switch.close_port(5)
+  end
+
+  test "list devices/used ports -> empty" do
+    devices = Switch.list_devices()
+    assert Enum.reject(devices, &(&1.device)) == []
+  end
+
+  test "list devices/used ports -> 1 item" do
+    device = "asdf-asdf-3asd-ddf2"
+    port = 4
+    Switch.open_port(4)
+    Switch.connect_device(device, port)
+    devices = Switch.list_devices()
+
+    assert Enum.reject(devices, &(&1.device)) == %{device: device, port: port}
+
+    Switch.close_port(4)
+  end
 
 end

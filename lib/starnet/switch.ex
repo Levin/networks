@@ -39,6 +39,10 @@ defmodule Starnet.Switch do
     GenServer.call(__MODULE__, :list_closed_ports)
   end
 
+  def list_used_ports() do
+    GenServer.call(__MODULE__, :list_used_ports)
+  end
+
   def start_link(_params) do
     Logger.debug("[#{__MODULE__}] has started")
     GenServer.start_link(__MODULE__, _params, name: __MODULE__)
@@ -93,8 +97,13 @@ defmodule Starnet.Switch do
     {:noreply, %{state | ports: filtered_ports ++ changed_port}}
   end
 
-  def handle_cast({:connect_device, {_mac, port}}, state) do
-    _open_port? = state.ports |> Enum.filter(fn {_, open?} -> port == open? end)
+  def handle_cast({:connect_device, {mac, port}}, state) do
+    
+    case port_open?(port) do
+      :true ->  %{state | devices: [%{device: mac, connected_to: port} | state.devices]}
+      :false -> 
+        Logger.debug("already in use with device")
+    end
 
     {:noreply, state}
   end
@@ -133,6 +142,18 @@ defmodule Starnet.Switch do
       true -> {port, :open}
       false -> {port, status}
     end
+  end
+
+  def port_open?(port_number) do
+    port_list = list_open_ports()
+    case Enum.reject(port_list, fn {port, _status} -> port != port_number end) do
+      [] -> :false
+      [port] -> :true
+    end
+  end
+
+  def get_connected_device(port) do
+      
   end
 
 end
