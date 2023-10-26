@@ -136,6 +136,7 @@ defmodule Starnet.Switch do
     {:reply, closed_ports, state}
   end
 
+
   defp change_state(:open, {port, status} = port_change, searched_port) do
     Logger.debug("change: #{inspect port_change}")
     case port == searched_port do
@@ -153,7 +154,7 @@ defmodule Starnet.Switch do
   end
 
   def get_connected_device(port) do
-      
+      port
   end
 
 end
