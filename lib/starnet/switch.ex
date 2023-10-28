@@ -98,14 +98,11 @@ defmodule Starnet.Switch do
   end
 
   def handle_cast({:connect_device, {mac, port}}, state) do
-    
-    case port_open?(port) do
-      :true ->  %{state | devices: [%{device: mac, connected_to: port} | state.devices]}
-      :false -> 
-        Logger.debug("already in use with device")
+    old_devices = state.devices
+    case Enum.filter(old_devices, &(&1.device == mac)) do
+      [] -> {:noreply, %{state |devices: [%{device: mac, port: port} | old_devices]}}
+      [value] -> {:noreply, state}
     end
-
-    {:noreply, state}
   end
 
   def handle_continue(:setup, state) do
