@@ -15,6 +15,10 @@ defmodule Starnet.Switch do
     GenServer.cast(__MODULE__, {:connect_device, {mac, port}})
   end
 
+  def dispatch_device(mac) do
+    GenServer.cast(__MODULE__, {:dispatch_device, mac})
+  end
+
   def open_port(port) do
     GenServer.cast(__MODULE__, {:open_port, port})
   end
@@ -43,16 +47,17 @@ defmodule Starnet.Switch do
     GenServer.call(__MODULE__, :list_used_ports)
   end
 
-  def start_link(_params) do
+  def start_link(params) do
     Logger.debug("[#{__MODULE__}] has started")
-    GenServer.start_link(__MODULE__, _params, name: __MODULE__)
+    GenServer.start_link(__MODULE__, params, name: __MODULE__)
   end
 
-  def init(_params) do
-    Logger.debug("*** starting switch ***")
+  def init(params) do
+    {:params, %{ports: ports}} = List.first(params)
+    Logger.debug("*** starting switch with #{inspect ports} ports ***")
 
     ports = 
-      for x <- 1..8 do
+      for x <- 1..ports do
         {x, :closed}
       end
     
@@ -101,8 +106,21 @@ defmodule Starnet.Switch do
     old_devices = state.devices
     case Enum.filter(old_devices, &(&1.device == mac)) do
       [] -> {:noreply, %{state |devices: [%{device: mac, port: port} | old_devices]}}
-      [value] -> {:noreply, state}
+      [_value] -> {:noreply, state}
     end
+  end
+
+  def handle_cast({:dispatch_device, mac}, state) do
+
+    case Enum.filter(state.devices, &(&1.device == mac)) do
+      [] -> {:noreply, state}
+      [_value] -> 
+        new_devices = Enum.reject(state.devices, &(&1.device == mac))
+        {:noreply, %{state | devices: new_devices}}
+    end
+
+
+
   end
 
   def handle_continue(:setup, state) do

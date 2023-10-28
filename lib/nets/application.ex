@@ -10,7 +10,7 @@ defmodule Nets.Application do
     children = [
       # Starts a worker by calling: Nets.Worker.start_link(arg)
       {Phoenix.PubSub, name: Nets.PubSub},
-      Starnet.Switch
+      {Starnet.Switch, params: %{ports: 8}},
 
       # {Nets.Worker, arg}
     ]

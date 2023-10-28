@@ -12,11 +12,12 @@ Today(24-10-2023) -> How do switches really operates
  
   => features
   	- enable/disable ports  -> done
-	- connect devices on ports -> store macs
-	- portsize
-	- mac storage
-	- monitoring
-	- mac filtering
+	- connect devices on ports -> store macs -> done
+	- dispatch devices from ports -> ongoing
+	- portsize -> done
+	- mac storage -> done
+	- monitoring -> future
+	- mac filtering -> future
  
 
 

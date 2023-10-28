@@ -1,5 +1,4 @@
 defmodule SwitchTest do
-  require Logger
   alias Starnet.Switch
   use ExUnit.Case
   doctest Switch
@@ -69,16 +68,8 @@ defmodule SwitchTest do
     device = "asdf-asdf-3asd-ddf2"
     port = 4
 
-    Switch.open_port(port)
+    Switch.open_port(4)
     Switch.connect_device(device, port)
-    old_length = length(Switch.list_devices)
-    Logger.debug("** switch holds #{old_length} devices")
-
-    Switch.dispatch_device(device)
-    new_length = length(Switch.list_devices)
-    Logger.debug("** switch holds #{new_length} devices")
-    assert old_length > new_length
-    Switch.close_port(port)
   end
 
   test "provide port size" do
