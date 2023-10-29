@@ -9,11 +9,10 @@ defmodule Nets.Application do
   def start(_type, _args) do
     children = [
       # Starts a worker by calling: Nets.Worker.start_link(arg)
-      {Phoenix.PubSub, name: Nets.PubSub},
+      {Phoenix.PubSub, name: :networks},
       {Starnet.Switch, params: %{ports: 8}},
       {Device, %{mac: "as2f-ggv2-plk4-ijg4"}},
 
-      # {Nets.Worker, arg}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

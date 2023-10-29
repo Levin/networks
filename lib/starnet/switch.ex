@@ -55,13 +55,11 @@ defmodule Starnet.Switch do
   def init(params) do
     {:params, %{ports: ports}} = List.first(params)
     Logger.debug("*** starting switch with #{inspect ports} ports ***")
-
+    Phoenix.PubSub.subscribe(:networks, "connections")
     ports = 
       for x <- 1..ports do
         {x, :closed}
       end
-    
-
     Logger.debug("creating ports #{inspect ports}")
 
     {:ok,
