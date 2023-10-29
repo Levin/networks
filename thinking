@@ -2,6 +2,8 @@
 
 Here we take notes and think about new functionality
 
+protocole : %{mac : str, port : int}
+
 Today(24-10-2023) -> How do switches really operates
 - notes device mac in table  <- for identification
 - portsize !!
@@ -13,7 +15,7 @@ Today(24-10-2023) -> How do switches really operates
   => features
   	- enable/disable ports  -> done
 	- connect devices on ports -> store macs -> done
-	- dispatch devices from ports -> ongoing
+	- dispatch devices from ports -> done
 	- portsize -> done
 	- mac storage -> done
 	- monitoring -> future
@@ -23,5 +25,21 @@ Today(24-10-2023) -> How do switches really operates
 
 
 
-Future(soon) -> hubs
+Future(soon) -> hubs -> stall because we do device now
 - broadcast to all connected devices
+
+
+TODAY(29-10-2023) -> what do we want to do with devices
+- connect to anything
+- retrieve mac
+- list connected x
+- retrieve open connection possibilities
+
+  => features
+  	- holds state %{mac: str, connections: [%{mac: str, port: int}]} -it does
+	- list connections -> ongoing 
+	- retrieve connections (pubsub)
+
+
+Tomorrow(30-10-2023) -> Connection
+- defstruct [:mac, :port]
