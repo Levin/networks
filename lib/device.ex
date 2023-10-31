@@ -15,6 +15,8 @@ defmodule Device do
     GenServer.call(__MODULE__, :search)
   end
 
+
+
   def start_link(params) do
     ports = 
       for x <- 1..16 do
@@ -41,6 +43,7 @@ defmodule Device do
   end
 
   def handle_call(:search, _from, state) do
+    Phoenix.PubSub.broadcast(:networks, "connections", {:ping_all, :open?})
     {:reply, state, state}
   end
 

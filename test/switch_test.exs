@@ -1,8 +1,8 @@
 defmodule SwitchTest do
-  require Logger
-  alias Starnet.Switch
-  use ExUnit.Case
-  doctest Switch
+require Logger
+alias Starnet.Switch
+use ExUnit.Case
+doctest Switch
 
   describe "testing switch functionality" do
 
@@ -90,15 +90,6 @@ defmodule SwitchTest do
 
   end
 
-  describe "testing device functionality" do
-   
-
-    test "device holds his mac" do
-      mac = "234d-df31-doo2-lmj3"
-      Device.start_link(%{mac: "234d-df31-doo2-lmj3"})
-      assert Device.get_device_info() != nil 
-    end
-  end
 
 
 

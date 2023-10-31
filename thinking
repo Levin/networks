@@ -30,7 +30,7 @@ Future(soon) -> hubs -> stall because we do device now
 
 
 TODAY(29-10-2023) -> what do we want to do with devices
-- connect to anything
+tb connect to anything
 - retrieve mac
 - list connected x
 - retrieve open connection possibilities
@@ -42,4 +42,8 @@ TODAY(29-10-2023) -> what do we want to do with devices
 
 
 Tomorrow(30-10-2023) -> Connection
-- defstruct [:mac, :port]
+- defstruct [:uuid, :mac, :port]
+- establish
+- dispatch
+- 
+
