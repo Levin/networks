@@ -42,6 +42,29 @@ defmodule DeviceTest do
 
       assert length(datastream) == 1 
 
+      Device.detach(mac_one, mac_two)
+
+    end
+
+    test "receiving data from device to device" do
+      # This will work as soon as every device is its own genserver. later problem
+    end
+
+    test "messages filtered from a mac " do
+
+      mac_one = "234d-dfasdfasf"
+      mac_two = "234d-df3"
+      data = "Hi from #{mac_one}! How is it over there @#{mac_two}?"
+      Device.link(mac_one, mac_two)
+
+      loglist = Device.filter_messages(mac_one)
+
+      Logger.debug("logs: #{inspect loglist}")
+
+      assert length(loglist) == 1
+
+      Device.detach(mac_one, mac_two)
+
     end
 
 

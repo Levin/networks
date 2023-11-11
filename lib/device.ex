@@ -26,6 +26,10 @@ defmodule Device do
     GenServer.cast(__MODULE__, {:send, {data, mac_one, mac_two}})
   end
 
+  def filter_messages(mac) do
+    GenServer.call(__MODULE__, {:filter, mac})
+  end
+
   def start_link(params) do
     ports = 
       for x <- 1..16 do
@@ -41,6 +45,22 @@ defmodule Device do
     Logger.debug("*** starting device with mac #{inspect state.mac} ")
     Phoenix.PubSub.subscribe(:networks, "connections")
     {:ok, state}
+  end
+
+  def handle_call({:filter, mac}, _from, state) do
+
+    logs? = case Enum.filter(state.connections, &(&1.device_one == mac || &1.device_two == mac)) do
+      [] -> 
+        Logger.debug("Sorry, no messages from this device #{mac} yet!")
+        state.connections
+      _result -> 
+        Logger.debug("Found some activities around this #{mac} adress. This is the log: ")
+        state.data
+        |> Enum.filter(&(&1.from == mac || &1.to == mac))
+        |> Enum.map(&("From: #{&1.from} to #{&1.to} : #{&1.data}"))
+    end
+
+    {:reply, logs?, state}
   end
 
   def handle_call({:detach, {one, two}}, _from, state) do
@@ -71,7 +91,6 @@ defmodule Device do
         Logger.debug("Sorry, #{sender} could not send data #{data} to #{receiver}")
         new_data = [%{from: sender, to: receiver, data: data} | state.data]
         {:noreply, %{state | data: new_data}}
-        
     end
   end
 
