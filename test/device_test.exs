@@ -28,6 +28,19 @@ defmodule DeviceTest do
 
       %{connections: conns} = Device.get_device_info()
       assert length(conns) == 0
+    end
+
+    test "send data from device one to device two (just the sending part, receiving will follow next)" do
+      
+      mac_one = "234d-dfasdfasf"
+      mac_two = "234d-df3"
+      data = "Hi from #{mac_one}! How is it over there @#{mac_two}?"
+      Device.link(mac_one, mac_two)
+
+      Device.send(data, {mac_one, mac_two})
+      %{data: datastream} = Device.get_device_info()
+
+      assert length(datastream) == 1 
 
     end
 
