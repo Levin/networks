@@ -1,4 +1,5 @@
 defmodule ConnectionTest do
+  alias Hex.Crypto.ContentEncryptor
   require Logger
   use ExUnit.Case
   doctest Connection
@@ -26,7 +27,18 @@ defmodule ConnectionTest do
     end
 
     test "removeing a connection works" do
-      
+      Connection.start()
+
+      mac_one = "asdf-31asdf-23d2d-23d"
+      mac_two = "a-23d2d32--d-23d2d-dd"
+
+      Connection.detach(mac_one, mac_two)
+
+      status = Connection.info()
+      assert length(status.active_connections) == 0
+
+
+
     end
 
   end
