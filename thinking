@@ -29,7 +29,7 @@ TODAY(29-10-2023) -> what do we want to do with devices
 tb connect to anything
 - retrieve mac
 - list connected x
-- retrieve open connection possibilities
+- retrieve open connection possibilities -> future
 
   => features
   	- holds state %{mac: str, connections: [%{mac: str, port: int}]} -it does
@@ -41,5 +41,8 @@ Tomorrow(30-10-2023) -> Connection
 - defstruct [:uuid, :mac, :port]
 - establish
 - dispatch
-- 
+ done
+
+
+
 

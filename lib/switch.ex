@@ -1,4 +1,4 @@
-defmodule Starnet.Switch do
+defmodule Switch do
   @moduledoc """
     This module defines the connecting part in this network - the switch.
     It exchanges messages between nodes. Therefore it can accept data comming from a node 
@@ -44,7 +44,7 @@ defmodule Starnet.Switch do
   end
 
   def list_used_ports() do
-    GenServer.call(__MODULE__, :list_used_ports)
+    GenSever.call(__MODULE__, :list_used_ports)
   end
 
   def start_link(params) do
@@ -55,7 +55,6 @@ defmodule Starnet.Switch do
   def init(params) do
     {:params, %{ports: ports}} = List.first(params)
     Logger.debug("*** starting switch with #{inspect ports} ports ***")
-    Phoenix.PubSub.subscribe(:networks, "connections")
     ports = 
       for x <- 1..ports do
         {x, :closed}
