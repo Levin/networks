@@ -19,7 +19,8 @@ require Logger
       %{
           id: Switch,
           start: {Switch, :start, [%{ports: 8}]}
-      }
+      },
+
     ]
 
     Logger.debug("*** [#{__MODULE__}] started device and router channels ***")

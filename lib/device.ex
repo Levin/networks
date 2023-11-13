@@ -113,8 +113,8 @@ defmodule Device do
       state.ports
       |> Enum.filter(&(&1.status == :open))
 
-    Phoenix.PubSub.broadcast_from(:devices,  self(),"ports", {:ports, open_ports, __MODULE__})
-    Phoenix.PubSub.broadcast_from(:switches,  self(),"ports", {:ports, open_ports, __MODULE__})
+    Phoenix.PubSub.broadcast_from(:devices,  self(),"ports", {:ports, open_ports, create_handle(__MODULE__)})
+    Phoenix.PubSub.broadcast_from(:switches,  self(),"ports", {:ports, open_ports, create_handle(__MODULE__)})
     Logger.debug("[#{__MODULE__}] sending data")
     {:noreply, state}
   end
@@ -123,9 +123,12 @@ defmodule Device do
     ports = 
       raw_ports
       |> Enum.map(fn {port, status} -> %{port: port, from: module, status: status} end)
+
     new_possible_connections = [ports | state.possible_connections]
     {:noreply, %{state | possible_connections: new_possible_connections}}
   end
+
+  defp create_handle(module), do: "#{module}-#{inspect self()}"
 
 
 end

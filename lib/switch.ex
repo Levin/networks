@@ -11,6 +11,8 @@ defmodule Switch do
   use GenServer
   require Logger
 
+
+  
   def connect_device(mac, port) do
     GenServer.cast(__MODULE__, {:connect_device, {mac, port}})
   end
@@ -25,6 +27,10 @@ defmodule Switch do
 
   def close_port(port) do
     GenServer.cast(__MODULE__, {:close_port, port})
+  end
+
+  def get_switch_info() do
+    GenServer.call(__MODULE__, :info)
   end
 
   def list_devices() do
@@ -46,6 +52,8 @@ defmodule Switch do
   def list_used_ports() do
     GenSever.call(__MODULE__, :list_used_ports)
   end
+
+  def search_connections, do: GenServer.cast(__MODULE__, :ping)
 
   def start(params) do
     Logger.debug("[#{__MODULE__}] has started")
@@ -87,8 +95,14 @@ defmodule Switch do
 
     Logger.debug("all ports == #{inspect changed_port ++ filtered_ports}")
 
-
     {:noreply, %{state | ports: changed_port ++ filtered_ports}}
+  end
+
+  def handle_cast(:ping, state) do
+    Logger.debug("called ping on switch")
+    Phoenix.PubSub.broadcast(:devices, "ports", {:ping_all, :open?})
+    Phoenix.PubSub.broadcast(:switches, "ports", {:ping_all, :open?})
+    {:noreply, state}
   end
 
   def handle_cast({:open_port, closed_port}, state) do
@@ -119,13 +133,14 @@ defmodule Switch do
         new_devices = Enum.reject(state.devices, &(&1.device == mac))
         {:noreply, %{state | devices: new_devices}}
     end
-
-
-
   end
 
   def handle_continue(:setup, state) do
     {:noreply, state}
+  end
+
+  def handle_call(:info, _form ,state) do
+    {:reply, state, state}
   end
 
   def handle_call(:list_devices, _from, state) do
@@ -158,8 +173,8 @@ defmodule Switch do
       state.ports
       |> Enum.map(fn {port, _status} -> {port, :open} end)
 
-    Phoenix.PubSub.broadcast_from(:switches, self(), "ports", {:ports, open_ports, __MODULE__})
-    Phoenix.PubSub.broadcast_from(:devices, self(), "ports", {:ports, open_ports, __MODULE__})
+    Phoenix.PubSub.broadcast_from(:switches, self(), "ports", {:ports, open_ports, create_handle(__MODULE__)})
+    Phoenix.PubSub.broadcast_from(:devices, self(), "ports", {:ports, open_ports, create_handle(__MODULE__)})
     Logger.debug("[#{__MODULE__}] sending data")
     {:noreply, state}
   end
@@ -192,5 +207,8 @@ defmodule Switch do
   def get_connected_device(port) do
       port
   end
+
+
+  defp create_handle(module), do: "#{module}-#{inspect self()}"
 
 end
