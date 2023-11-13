@@ -39,7 +39,7 @@ defmodule Device do
         %{port: x, status: :open}
       end
 
-    state = %{mac: params.mac, connections: [], ports: ports, data: []}
+    state = %{mac: params.mac, connections: [], ports: ports, data: [], possible_connections: []}
     Logger.debug("*** [#{__MODULE__}] has started ")
     GenServer.start_link(__MODULE__, state, name: __MODULE__)
   end
@@ -109,7 +109,23 @@ defmodule Device do
 
   @impl true
   def handle_info({:ping_all, :open?}, state) do
-    Logger.debug("[#{__MODULE__}] has these ports open: #{inspect state.ports}")
+    open_ports =  
+      state.ports
+      |> Enum.filter(&(&1.status == :open))
+
+    Phoenix.PubSub.broadcast_from(:devices,  self(),"ports", {:ports, open_ports, __MODULE__})
+    Phoenix.PubSub.broadcast_from(:switches,  self(),"ports", {:ports, open_ports, __MODULE__})
+    Logger.debug("[#{__MODULE__}] sending data")
     {:noreply, state}
   end
+
+  def handle_info({:ports, raw_ports, module}, state) do
+    ports = 
+      raw_ports
+      |> Enum.map(fn {port, status} -> %{port: port, from: module, status: status} end)
+    new_possible_connections = [ports | state.possible_connections]
+    {:noreply, %{state | possible_connections: new_possible_connections}}
+  end
+
+
 end

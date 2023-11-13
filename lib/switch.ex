@@ -64,11 +64,12 @@ defmodule Switch do
     Phoenix.PubSub.subscribe(:devices, "ports")
 
     {:ok,
-     %{
-       mac: ~c"00-B0-D0-63-C2-26",
-       ports: ports,
-       devices: [],
-     }, {:continue, :setup}}
+      %{
+        mac: ~c"00-B0-D0-63-C2-26",
+        ports: ports,
+        devices: [],
+        possible_ports: [],
+      }, {:continue, :setup}}
   end
 
   @impl true
@@ -157,8 +158,19 @@ defmodule Switch do
       state.ports
       |> Enum.map(fn {port, _status} -> {port, :open} end)
 
-    Logger.debug("[#{__MODULE__}] has these ports open: #{inspect open_ports}")
+    Phoenix.PubSub.broadcast_from(:switches, self(), "ports", {:ports, open_ports, __MODULE__})
+    Phoenix.PubSub.broadcast_from(:devices, self(), "ports", {:ports, open_ports, __MODULE__})
+    Logger.debug("[#{__MODULE__}] sending data")
     {:noreply, state}
+  end
+
+  def handle_info({:ports, raw_ports, module}, state) do
+    ports = 
+      raw_ports
+      |> Enum.map(fn info -> Map.put(info, :from, module) end)
+
+    new_possible_ports = [ports | state.possible_ports]
+    {:noreply, %{state | possible_ports: new_possible_ports}}
   end
 
   defp change_state(:open, {port, status} = port_change, searched_port) do
