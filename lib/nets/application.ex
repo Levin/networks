@@ -2,6 +2,7 @@ defmodule Nets.Application do
   # See https://hexdocs.pm/elixir/Application.html
   # for more information on OTP Applications
   @moduledoc false
+require Logger
 
   use Application
 
@@ -9,7 +10,19 @@ defmodule Nets.Application do
   def start(_type, _args) do
     children = [
       # Starts a worker by calling: Nets.Worker.start_link(arg)
+      Supervisor.child_spec({Phoenix.PubSub, name: :devices}, id: :pubsub_0),
+      Supervisor.child_spec({Phoenix.PubSub, name: :switches}, id: :pubsub_1),
+      %{
+          id: Device,
+          start: {Device, :start, [%{mac: "as4d-5gw3-alg3"}]}
+      },
+      %{
+          id: Switch,
+          start: {Switch, :start, [%{ports: 8}]}
+      }
     ]
+
+    Logger.debug("*** [#{__MODULE__}] started device and router channels ***")
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options

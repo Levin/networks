@@ -2,6 +2,7 @@ defmodule Device do
   use GenServer
   require Logger
 
+  
   def get_device_info() do
     GenServer.call(__MODULE__, :info)
   end
@@ -30,7 +31,9 @@ defmodule Device do
     GenServer.call(__MODULE__, {:filter, mac})
   end
 
-  def start_link(params) do
+  def search_connections, do: GenServer.cast(__MODULE__, :ping)
+
+  def start(params) do
     ports = 
       for x <- 1..16 do
         %{port: x, status: :open}
@@ -41,9 +44,13 @@ defmodule Device do
     GenServer.start_link(__MODULE__, state, name: __MODULE__)
   end
 
+  @impl true
   def init(state) do
     Logger.debug("*** starting device with mac #{inspect state.mac} ")
-    Phoenix.PubSub.subscribe(:networks, "connections")
+    Phoenix.PubSub.subscribe(:devices, "ports")
+    Phoenix.PubSub.subscribe(:switches, "ports")
+
+
     {:ok, state}
   end
 
@@ -76,11 +83,6 @@ defmodule Device do
     {:reply, state.connections, state}
   end
 
-  def handle_call(:search, _from, state) do
-    Phoenix.PubSub.broadcast(:networks, "connections", {:ping_all, :open?})
-    {:reply, state, state}
-  end
-
   def handle_cast({:send, {data, sender, receiver}}, state) do
     case Enum.filter(state.connections, &((&1.device_one == sender && &1.device_two == receiver)) || (&1.device_one == receiver && &1.device_two == sender)) do
       [] -> 
@@ -99,4 +101,15 @@ defmodule Device do
     {:noreply, %{state | connections: new_connections}}
   end
 
+  def handle_cast(:ping, state) do
+    Phoenix.PubSub.broadcast(:devices, "ports", {:ping_all, :open?})
+    Phoenix.PubSub.broadcast(:switches, "ports", {:ping_all, :open?})
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_info({:ping_all, :open?}, state) do
+    Logger.debug("[#{__MODULE__}] has these ports open: #{inspect state.ports}")
+    {:noreply, state}
+  end
 end

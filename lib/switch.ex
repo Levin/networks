@@ -47,19 +47,21 @@ defmodule Switch do
     GenSever.call(__MODULE__, :list_used_ports)
   end
 
-  def start_link(params) do
+  def start(params) do
     Logger.debug("[#{__MODULE__}] has started")
     GenServer.start_link(__MODULE__, params, name: __MODULE__)
   end
 
-  def init(params) do
-    {:params, %{ports: ports}} = List.first(params)
+  @impl true
+  def init(%{ports: ports} = _params) when is_number(ports) do
     Logger.debug("*** starting switch with #{inspect ports} ports ***")
     ports = 
       for x <- 1..ports do
         {x, :closed}
       end
     Logger.debug("creating ports #{inspect ports}")
+    Phoenix.PubSub.subscribe(:switches, "ports")
+    Phoenix.PubSub.subscribe(:devices, "ports")
 
     {:ok,
      %{
@@ -69,6 +71,7 @@ defmodule Switch do
      }, {:continue, :setup}}
   end
 
+  @impl true
   def handle_cast({:close_port, open_port}, state) do
     changed_port = 
       state.ports
@@ -148,6 +151,15 @@ defmodule Switch do
     {:reply, closed_ports, state}
   end
 
+  @impl true
+  def handle_info({:ping_all, :open?}, state) do
+    open_ports =
+      state.ports
+      |> Enum.map(fn {port, _status} -> {port, :open} end)
+
+    Logger.debug("[#{__MODULE__}] has these ports open: #{inspect open_ports}")
+    {:noreply, state}
+  end
 
   defp change_state(:open, {port, status} = port_change, searched_port) do
     Logger.debug("change: #{inspect port_change}")
