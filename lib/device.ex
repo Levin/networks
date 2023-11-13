@@ -124,11 +124,14 @@ defmodule Device do
       raw_ports
       |> Enum.map(fn {port, status} -> %{port: port, from: module, status: status} end)
 
-    new_possible_connections = [ports | state.possible_connections]
+    new_possible_connections = filter_possible_ports([ports | state.possible_connections])
     {:noreply, %{state | possible_connections: new_possible_connections}}
   end
 
   defp create_handle(module), do: "#{module}-#{inspect self()}"
 
+  defp filter_possible_ports(portlist) do
+    List.flatten(portlist) |> Enum.uniq()
+  end
 
 end

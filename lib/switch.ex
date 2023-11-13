@@ -184,7 +184,7 @@ defmodule Switch do
       raw_ports
       |> Enum.map(fn info -> Map.put(info, :from, module) end)
 
-    new_possible_ports = [ports | state.possible_ports]
+    new_possible_ports = filter_possible_ports([ports | state.possible_ports])
     {:noreply, %{state | possible_ports: new_possible_ports}}
   end
 
@@ -210,5 +210,9 @@ defmodule Switch do
 
 
   defp create_handle(module), do: "#{module}-#{inspect self()}"
+
+  defp filter_possible_ports(portlist) do
+    List.flatten(portlist) |> Enum.uniq()
+  end
 
 end
