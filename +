@@ -1,0 +1,22 @@
+defmodule Router do
+  use GenServer
+  require Logger
+
+
+  def start(ports \\ 24, mac \\ "dsg2-hefv-o645-3rgf") do
+    Logge.debug("[#{__MODULE__}] is starting with #{ports} and #{mac}")
+    GenServer.start_link(__MODULE__, ports, name: mac)
+  end
+
+  def init(params) do
+
+    Enum.to_list(
+      for x <- 1..ports do
+        {x, :closed}
+      end
+    )    
+
+    {:ok, params}
+  end
+
+end
