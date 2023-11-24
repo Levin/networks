@@ -1,4 +1,4 @@
-defmodule Connection do
+defmodule Connections do
   use GenServer
   require Logger
 
@@ -34,19 +34,27 @@ defmodule Connection do
 
 
   def handle_cast({:establish, {one, two}}, state) do
-    new_connections = [%{device_one: one, device_two: two} | state.active_connections]
-
+    e_time = DateTime.utc_now()
+    n_conn = %Connection{device_a: one, device_b: two, established: DateTime.to_string(e_time)}
+    new_connections = [n_conn | state.active_connections]
     {:noreply, %{state | active_connections: new_connections}}
   end
 
   def handle_cast({:detach, {one, two}}, state) do
-    conns = 
-      case state.active_connections
-      |> Enum.reject(&((&1.device_one != one && &1.device_two != two) || (&1.device_one != two && &1.device_two != one))) do
-        [] -> :no_connection
-        list -> list
+    state.active_connections
+    |> Enum.filter(&(&1.device_a == one && &1.device_b == two || &1.device_a == two && &1.device_b == one))
+    |> case do
+      l_value -> 
+        value = List.first(l_value)
+        n_active = 
+          Enum.filter(state.active_connections, &(&1.device_a == value.device_a && &1.device_b == value.device_b))
+
+        n_old = [value |state.old_connections]
+        {:noreply, %{active_connections: n_active, old_connections: n_old}}
+      [] -> 
+        {:noreply, state}
+
     end
-    {:noreply, state}
   end 
 
 

@@ -1,11 +1,10 @@
 defmodule SwitchTest do
-require Logger
-alias Starnet.Switch
-use ExUnit.Case
-doctest Switch
+  require Logger
+  alias Starnet.Switch
+  use ExUnit.Case
+  doctest Switch
 
   describe "testing switch functionality" do
-
     test "portlist is 8 items long" do
       portlist = Switch.get_ports()
       assert length(portlist) == 8
@@ -17,19 +16,21 @@ doctest Switch
     end
 
     test "only closed ports in portlist" do
-      portlist = Enum.reject(Switch.list_closed_ports(), fn {_port, status} -> status == :closed end)
+      portlist =
+        Enum.reject(Switch.list_closed_ports(), fn {_port, status} -> status == :closed end)
+
       assert portlist == []
     end
 
     test "open closed port" do
-      {port, status}  = {4, :closed}
+      {port, status} = {4, :closed}
       closed_ports = Switch.list_closed_ports()
       assert length(closed_ports) == 8
       Switch.open_port(port)
       opened_ports = Switch.list_open_ports()
       assert length(opened_ports) == 1
       Switch.close_port(port)
-      Switch.close_port port
+      Switch.close_port(port)
     end
 
     test "close open port" do
@@ -46,13 +47,13 @@ doctest Switch
     test "test open port" do
       port_number = 5
       Switch.open_port(5)
-      assert Switch.port_open?(port_number) == :true
+      assert Switch.port_open?(port_number) == true
       Switch.close_port(5)
     end
 
     test "list devices/used ports -> empty" do
       devices = Switch.list_devices()
-      assert Enum.reject(devices, &(&1.device)) == []
+      assert Enum.reject(devices, & &1.device) == []
     end
 
     test "list devices/used ports -> 1 item" do
@@ -73,11 +74,11 @@ doctest Switch
 
       Switch.open_port(port)
       Switch.connect_device(device, port)
-      old_length = length(Switch.list_devices)
+      old_length = length(Switch.list_devices())
       Logger.debug("** switch holds #{old_length} devices")
 
       Switch.dispatch_device(device)
-      new_length = length(Switch.list_devices)
+      new_length = length(Switch.list_devices())
       Logger.debug("** switch holds #{new_length} devices")
       assert old_length > new_length
       Switch.close_port(port)
@@ -87,10 +88,5 @@ doctest Switch
       port_sizes = [4, 8, 16, 32, 64, 128, 256]
       assert length(Switch.get_ports()) in port_sizes == true
     end
-
   end
-
-
-
-
 end

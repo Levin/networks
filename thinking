@@ -39,6 +39,7 @@ tb connect to anything
 
 Tomorrow(30-10-2023) -> Connection
 - defstruct [:uuid, :mac, :port]
+Functionality done
 - establish
 - dispatch
  done

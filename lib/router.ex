@@ -2,11 +2,9 @@ defmodule Router do
   use GenServer
   require Logger
 
-
   def ipv4(device_one, device_two) do
     GenServer.cast(__MODULE__, {:ipv4, device_one, device_two})
   end
-
 
   def info() do
     GenServer.call(__MODULE__, :info)
@@ -18,11 +16,12 @@ defmodule Router do
   end
 
   def init(params) do
-    ports = Enum.to_list(
-      for x <- 1..params.ports do
-        {x, :closed}
-      end
-    )    
+    ports =
+      Enum.to_list(
+        for x <- 1..params.ports do
+          {x, :closed}
+        end
+      )
 
     {:ok, %{ports: ports, mac: params.mac, connections: []}}
   end
@@ -34,5 +33,4 @@ defmodule Router do
   def handle_cast({:ipv4, ip_o, ip_t}, state) do
     {:noreply, state}
   end
-
 end

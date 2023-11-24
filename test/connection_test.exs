@@ -5,16 +5,14 @@ defmodule ConnectionTest do
   doctest Connection
 
   describe "testing connection functionality" do
-    
     test "creation of connection works" do
       Connection.start()
       %{active_connections: conns, old_connections: o_conns} = Connection.info()
 
-      assert (conns == [] && o_conns == [])
+      assert conns == [] && o_conns == []
     end
 
     test "adding a connection works" do
-      
       Connection.start()
 
       mac_one = "asdf-31asdf-23d2d-23d"
@@ -23,7 +21,6 @@ defmodule ConnectionTest do
       Connection.establish(mac_one, mac_two)
       status = Connection.info()
       assert length(status.active_connections) == 1
-
     end
 
     test "removeing a connection works" do
@@ -36,12 +33,6 @@ defmodule ConnectionTest do
 
       status = Connection.info()
       assert length(status.active_connections) == 0
-
-
-
     end
-
   end
-
-
 end

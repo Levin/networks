@@ -11,8 +11,6 @@ defmodule Switch do
   use GenServer
   require Logger
 
-
-  
   def connect_device(mac, port) do
     GenServer.cast(__MODULE__, {:connect_device, {mac, port}})
   end
@@ -62,38 +60,40 @@ defmodule Switch do
 
   @impl true
   def init(%{ports: ports} = _params) when is_number(ports) do
-    Logger.debug("*** starting switch with #{inspect ports} ports ***")
-    ports = 
+    Logger.debug("*** starting switch with #{inspect(ports)} ports ***")
+
+    ports =
       for x <- 1..ports do
         {x, :closed}
       end
-    Logger.debug("creating ports #{inspect ports}")
+
+    Logger.debug("creating ports #{inspect(ports)}")
     Phoenix.PubSub.subscribe(:switches, "ports")
     Phoenix.PubSub.subscribe(:devices, "ports")
 
     {:ok,
-      %{
-        mac: ~c"00-B0-D0-63-C2-26",
-        ports: ports,
-        devices: [],
-        possible_ports: [],
-      }, {:continue, :setup}}
+     %{
+       mac: ~c"00-B0-D0-63-C2-26",
+       ports: ports,
+       devices: [],
+       possible_ports: []
+     }, {:continue, :setup}}
   end
 
   @impl true
   def handle_cast({:close_port, open_port}, state) do
-    changed_port = 
+    changed_port =
       state.ports
       |> Enum.filter(fn {port, _status} -> port == open_port end)
       |> Enum.map(fn {port, _status} -> {port, :closed} end)
 
-    filtered_ports = 
+    filtered_ports =
       Enum.reject(
-        state.ports, 
+        state.ports,
         fn {port, _status} -> port == open_port end
       )
 
-    Logger.debug("all ports == #{inspect changed_port ++ filtered_ports}")
+    Logger.debug("all ports == #{inspect(changed_port ++ filtered_ports)}")
 
     {:noreply, %{state | ports: changed_port ++ filtered_ports}}
   end
@@ -106,30 +106,33 @@ defmodule Switch do
   end
 
   def handle_cast({:open_port, closed_port}, state) do
-    changed_port = 
+    changed_port =
       state.ports
       |> Enum.filter(fn {port, _status} -> port == closed_port end)
       |> Enum.map(fn {port, _status} -> {port, :open} end)
 
-    filtered_ports = state.ports
-    |> Enum.reject(fn {port, _} -> port == closed_port end)
+    filtered_ports =
+      state.ports
+      |> Enum.reject(fn {port, _} -> port == closed_port end)
 
     {:noreply, %{state | ports: filtered_ports ++ changed_port}}
   end
 
   def handle_cast({:connect_device, {mac, port}}, state) do
     old_devices = state.devices
+
     case Enum.filter(old_devices, &(&1.device == mac)) do
-      [] -> {:noreply, %{state |devices: [%{device: mac, port: port} | old_devices]}}
+      [] -> {:noreply, %{state | devices: [%{device: mac, port: port} | old_devices]}}
       [_value] -> {:noreply, state}
     end
   end
 
   def handle_cast({:dispatch_device, mac}, state) do
-
     case Enum.filter(state.devices, &(&1.device == mac)) do
-      [] -> {:noreply, state}
-      [_value] -> 
+      [] ->
+        {:noreply, state}
+
+      [_value] ->
         new_devices = Enum.reject(state.devices, &(&1.device == mac))
         {:noreply, %{state | devices: new_devices}}
     end
@@ -139,7 +142,7 @@ defmodule Switch do
     {:noreply, state}
   end
 
-  def handle_call(:info, _form ,state) do
+  def handle_call(:info, _form, state) do
     {:reply, state, state}
   end
 
@@ -152,7 +155,7 @@ defmodule Switch do
   end
 
   def handle_call(:list_open_ports, _from, state) do
-    open_ports = 
+    open_ports =
       state.ports
       |> Enum.filter(fn {_port, status} -> status == :open end)
 
@@ -160,7 +163,7 @@ defmodule Switch do
   end
 
   def handle_call(:list_closed_ports, _from, state) do
-    closed_ports = 
+    closed_ports =
       state.ports
       |> Enum.filter(fn {_port, status} -> status == :closed end)
 
@@ -173,14 +176,26 @@ defmodule Switch do
       state.ports
       |> Enum.map(fn {port, _status} -> {port, :open} end)
 
-    Phoenix.PubSub.broadcast_from(:switches, self(), "ports", {:ports, open_ports, create_handle(__MODULE__)})
-    Phoenix.PubSub.broadcast_from(:devices, self(), "ports", {:ports, open_ports, create_handle(__MODULE__)})
+    Phoenix.PubSub.broadcast_from(
+      :switches,
+      self(),
+      "ports",
+      {:ports, open_ports, create_handle(__MODULE__)}
+    )
+
+    Phoenix.PubSub.broadcast_from(
+      :devices,
+      self(),
+      "ports",
+      {:ports, open_ports, create_handle(__MODULE__)}
+    )
+
     Logger.debug("[#{__MODULE__}] sending data")
     {:noreply, state}
   end
 
   def handle_info({:ports, raw_ports, module}, state) do
-    ports = 
+    ports =
       raw_ports
       |> Enum.map(fn info -> Map.put(info, :from, module) end)
 
@@ -189,7 +204,8 @@ defmodule Switch do
   end
 
   defp change_state(:open, {port, status} = port_change, searched_port) do
-    Logger.debug("change: #{inspect port_change}")
+    Logger.debug("change: #{inspect(port_change)}")
+
     case port == searched_port do
       true -> {port, :open}
       false -> {port, status}
@@ -198,21 +214,20 @@ defmodule Switch do
 
   def port_open?(port_number) do
     port_list = list_open_ports()
+
     case Enum.reject(port_list, fn {port, _status} -> port != port_number end) do
-      [] -> :false
-      [port] -> :true
+      [] -> false
+      [port] -> true
     end
   end
 
   def get_connected_device(port) do
-      port
+    port
   end
 
-
-  defp create_handle(module), do: "#{module}-#{inspect self()}"
+  defp create_handle(module), do: "#{module}-#{inspect(self())}"
 
   defp filter_possible_ports(portlist) do
     List.flatten(portlist) |> Enum.uniq()
   end
-
 end
